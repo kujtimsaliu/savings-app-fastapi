@@ -23,12 +23,14 @@ class Months(enum.Enum):
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String, nullable=False, unique=True)
+    google_id = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
     password = Column(String, nullable=True)
-    name = Column(String, nullable=False)
+    name = Column(String)
+    given_name = Column(String)
+    family_name = Column(String)
+    picture_url = Column(String)
     income = Column(Float, nullable=True)
-    google_id = Column(String, nullable=True, unique=True)
-
 
 class Budget(Base):
     __tablename__ = "budgets"

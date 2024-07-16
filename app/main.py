@@ -27,37 +27,54 @@ oauth2_scheme = OAuth2AuthorizationCodeBearer(
     authorizationUrl="https://accounts.google.com/o/oauth2/auth",
     tokenUrl="https://oauth2.googleapis.com/token",
 )
-class TokenRequest(BaseModel):
-    id_token: str
 
-@app.post("/auth/google")
-async def google_auth(token_request: TokenRequest, db: Session = Depends(get_db)):
+class UserCreate(BaseModel):
+    google_id: str
+    email: str
+    name: str
+    given_name: str
+    family_name: str
+    picture_url: str
+
+@app.post("/users")
+async def create_or_fetch_user(user: UserCreate, db: Session = Depends(get_db)):
     try:
-        idinfo = id_token.verify_oauth2_token(token_request.id_token, requests.Request(), GOOGLE_CLIENT_ID)
-
-        if idinfo['iss'] not in ['accounts.google.com', 'https://accounts.google.com']:
-            raise ValueError('Wrong issuer.')
-
-        google_id = idinfo['sub']
-        email = idinfo['email']
-        name = idinfo.get('name', '')
-
-        # Check if user exists
-        user = db.query(User).filter(User.google_id == google_id).first()
-        if not user:
+        db_user = db.query(User).filter(User.google_id == user.google_id).first()
+        if db_user:
+            # User exists, return their data
+            return {
+                "id": db_user.id,
+                "google_id": db_user.google_id,
+                "email": db_user.email,
+                "name": db_user.name,
+                "given_name": db_user.given_name,
+                "family_name": db_user.family_name,
+                "picture_url": db_user.picture_url,
+                "income": db_user.income
+            }
+        else:
             # Create new user
-            user = User(google_id=google_id, email=email, name=name)
-            db.add(user)
+            new_user = User(
+                google_id=user.google_id,
+                email=user.email,
+                name=user.name,
+                given_name=user.given_name,
+                family_name=user.family_name,
+                picture_url=user.picture_url
+            )
+            db.add(new_user)
             db.commit()
-            db.refresh(user)
-
-        # Return user info
-        return {
-            "id": user.id,
-            "email": user.email,
-            "name": user.name,
-            "income": user.income if user.income else 0,
-            "google_id": user.google_id
-        }
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
+            db.refresh(new_user)
+            return {
+                "id": new_user.id,
+                "google_id": new_user.google_id,
+                "email": new_user.email,
+                "name": new_user.name,
+                "given_name": new_user.given_name,
+                "family_name": new_user.family_name,
+                "picture_url": new_user.picture_url,
+                "income": new_user.income
+            }
+    except Exception as e:
+        print(f"Error: {str(e)}")
+        raise HTTPException(status_code=500, detail=str(e))
