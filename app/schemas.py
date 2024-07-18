@@ -2,15 +2,47 @@ from pydantic import BaseModel, EmailStr
 from datetime import datetime
 from typing import Optional
 
+from pydantic import BaseModel, EmailStr
+from datetime import datetime
+from typing import Optional
+from uuid import UUID
+
+
 
 class UserBase(BaseModel):
     email: EmailStr
     name: str
-    income: float
+    income: Optional[float] = None
 
 
 class UserCreate(UserBase):
     password: str
+
+
+class GoogleUserCreate(BaseModel):
+    google_id: str
+    email: EmailStr
+    name: str
+    given_name: str
+    family_name: str
+    picture_url: str
+
+
+class UserOut(UserBase):
+    id: UUID
+    google_id: Optional[str] = None
+    given_name: Optional[str] = None
+    family_name: Optional[str] = None
+    picture_url: Optional[str] = None
+
+    class Config:
+        from_attributes = True
+
+
+class Token(BaseModel):
+    access_token: str
+    refresh_token: str
+    token_type: str
 
 
 class User(UserBase):
@@ -62,3 +94,7 @@ class Budget(BudgetBase):
 
     class Config:
         from_attributes = True  # Updated for Pydantic v2
+
+
+class RefreshToken(BaseModel):
+    refresh_token: str
