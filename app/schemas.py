@@ -72,12 +72,13 @@ class Expense(ExpenseBase):
     owner_id: int
 
     class Config:
-        from_attributes = True  # Updated for Pydantic v2
+        from_attributes = True
 
 
 class BudgetBase(BaseModel):
     amount: float
     month: str
+    day: str
 
 
 class BudgetCreate(BudgetBase):
@@ -93,7 +94,7 @@ class Budget(BudgetBase):
     owner_id: int
 
     class Config:
-        from_attributes = True  # Updated for Pydantic v2
+        from_attributes = True
 
 
 class RefreshToken(BaseModel):
